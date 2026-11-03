@@ -710,7 +710,7 @@ Future<void> _showCardWidthDialog(
   final res = await showDialog<(double, double)>(
     context: context,
     builder: (context) => DualSliderDialog(
-      title: const Text('列表最大列宽度（默认240dp）'),
+      title: const Text('列表最大列宽度（主页默认500dp＝单列，其他默认240dp）'),
       value1: Pref.recommendCardWidth,
       value2: Pref.smallCardWidth,
       description1: const Text('主页推荐流'),

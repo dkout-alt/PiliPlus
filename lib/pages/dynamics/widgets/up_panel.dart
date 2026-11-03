@@ -50,46 +50,21 @@ class _UpPanelState extends State<UpPanel> {
             }),
             onLongPress: toFollowPage,
             onSecondaryTap: PlatformUtils.isMobile ? null : toFollowPage,
+            // 只保留折叠箭头，去掉 Live(N) 文案；高度取 MD3 最小触摸目标 48dp
             child: Container(
               alignment: .center,
-              height: isTop ? 76 : 60,
+              height: isTop ? 76 : 48,
               padding: isTop ? const .only(left: 12, right: 6) : null,
-              child: Text.rich(
-                textAlign: .center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: theme.colorScheme.primary,
-                ),
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Live(${upData.liveUsers?.count ?? 0})',
-                    ),
-                    if (!isTop) ...[
-                      const TextSpan(text: '\n'),
-                      WidgetSpan(
-                        alignment: .middle,
-                        child: Icon(
-                          controller.showLiveUp
-                              ? Icons.expand_less
-                              : Icons.expand_more,
-                          size: 12,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ] else
-                      WidgetSpan(
-                        alignment: .middle,
-                        child: Icon(
-                          controller.showLiveUp
-                              ? Icons.keyboard_arrow_right
-                              : Icons.keyboard_arrow_left,
-                          color: theme.colorScheme.primary,
-                          size: 14,
-                        ),
-                      ),
-                  ],
-                ),
+              child: Icon(
+                isTop
+                    ? (controller.showLiveUp
+                          ? Icons.keyboard_arrow_right
+                          : Icons.keyboard_arrow_left)
+                    : (controller.showLiveUp
+                          ? Icons.expand_less
+                          : Icons.expand_more),
+                size: isTop ? 14 : 12,
+                color: theme.colorScheme.primary,
               ),
             ),
           ),
