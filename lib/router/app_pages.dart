@@ -68,9 +68,7 @@ import 'package:PiliPlus/pages/video/view.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
 import 'package:PiliPlus/pages/whisper/view.dart';
 import 'package:PiliPlus/pages/whisper_detail/view.dart';
-import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:get/get.dart';
-import 'package:material_ui/material_ui.dart' show FadeTransition;
 
 class Routes {
   static final List<GetPage<dynamic>> getPages = [
@@ -79,24 +77,8 @@ class Routes {
     GetPage(name: '/home', page: () => const HomePage()),
     // 热门
     GetPage(name: '/hot', page: () => const HotPage()),
-    // 视频详情（MD3 container transform：从被点击的封面矩形生长为整页）
-    GetPage(
-      name: '/videoV',
-      page: () => const VideoDetailPageV(),
-      transitionDuration: const Duration(milliseconds: 400),
-      reverseTransitionDuration: const Duration(milliseconds: 200),
-      customTransition: (context, animation, secondaryAnimation, child) {
-        final sourceRect = containerTransformSource(Get.arguments);
-        if (sourceRect == null) {
-          return FadeTransition(opacity: animation, child: child);
-        }
-        return ContainerTransform(
-          animation: animation,
-          sourceRect: sourceRect,
-          child: child,
-        );
-      },
-    ),
+    // 视频详情
+    GetPage(name: '/videoV', page: () => const VideoDetailPageV()),
     //
     GetPage(name: '/webview', page: () => const WebviewPage()),
     // 设置

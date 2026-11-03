@@ -89,6 +89,13 @@ jobs:
               shell: pwsh
               run: lib/scripts/patch.ps1 android
 
+            # TODO: 临时诊断，拿到 GetPage 构造签名后删除
+            - name: Debug GetX GetPage signature
+              run: |
+                  f=$(ls -d "$HOME"/.pub-cache/git/getx-*/lib/get_navigation/src/routes/get_route.dart 2>/dev/null | head -n1)
+                  echo "FILE=$f"
+                  sed -n '1,110p' "$f"
+
             - name: Write key
               if: github.event_name == 'workflow_dispatch'
               run: |

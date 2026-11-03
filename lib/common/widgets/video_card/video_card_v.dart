@@ -30,6 +30,9 @@ class VideoCardV extends StatefulWidget {
     this.onRemove,
   });
 
+  static final shortFormat = DateFormat('M-d');
+  static final longFormat = DateFormat('yy-M-d');
+
   @override
   State<VideoCardV> createState() => _VideoCardVState();
 }
@@ -265,13 +268,10 @@ class _VideoCardVState extends State<VideoCardV> {
       spans.add(
         TextSpan(
           text:
-              ' · ${DateFormatUtils.dateFormat(pubdate, short: shortFormat, long: longFormat)}',
+              ' · ${DateFormatUtils.dateFormat(pubdate, short: VideoCardV.shortFormat, long: VideoCardV.longFormat)}',
         ),
       );
     }
     return spans;
   }
-
-  static final shortFormat = DateFormat('M-d');
-  static final longFormat = DateFormat('yy-M-d');
 }
