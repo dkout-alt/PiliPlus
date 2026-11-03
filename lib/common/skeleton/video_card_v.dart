@@ -21,11 +21,11 @@ class VideoCardVSkeleton extends StatelessWidget {
               padding: const .fromLTRB(16, 12, 16, 8),
               child: Column(
                 crossAxisAlignment: .start,
+                mainAxisSize: .min,
                 children: [
                   _bar(color, height: 13),
                   _bar(color, height: 13, width: 140, top: 5),
-                  const Spacer(),
-                  _bar(color, height: 11, width: 100),
+                  _bar(color, height: 11, width: 100, top: 6),
                 ],
               ),
             ),

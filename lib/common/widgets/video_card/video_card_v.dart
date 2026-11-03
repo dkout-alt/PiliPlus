@@ -222,18 +222,19 @@ class VideoCardV extends StatelessWidget {
       padding: const .fromLTRB(_hPad, 12, _hPad, 8),
       child: Column(
         crossAxisAlignment: .start,
+        mainAxisSize: .min,
         children: [
-          Expanded(
-            child: Text(
-              videoItem.title,
-              maxLines: 2,
-              overflow: .ellipsis,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                height: 1.4,
-                color: colorScheme.onSurface,
-              ),
+          Text(
+            videoItem.title,
+            maxLines: 2,
+            overflow: .ellipsis,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              height: 1.3,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
             ),
           ),
+          const SizedBox(height: 2),
           Text.rich(
             TextSpan(
               style: theme.textTheme.bodySmall?.copyWith(
