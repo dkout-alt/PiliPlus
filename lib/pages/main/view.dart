@@ -171,19 +171,29 @@ class _MainAppState extends PopScopeState<MainApp>
         );
       } else if (_mainController.enableMYBar) {
         bottomNav = Obx(
-          () => NavigationBar(
-            maintainBottomViewPadding: true,
-            onDestinationSelected: _mainController.setIndex,
-            selectedIndex: _mainController.selectedIndex.value,
-            destinations: _mainController.navigationBars
-                .map(
-                  (e) => NavigationDestination(
-                    label: e.label,
-                    icon: _buildIcon(type: e),
-                    selectedIcon: _buildIcon(type: e, selected: true),
-                  ),
-                )
-                .toList(),
+          // MD3 底栏靠色调分层，浅色下对比不足，补一条 1dp 装饰性分隔线
+          () => DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: _colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+            child: NavigationBar(
+              maintainBottomViewPadding: true,
+              onDestinationSelected: _mainController.setIndex,
+              selectedIndex: _mainController.selectedIndex.value,
+              destinations: _mainController.navigationBars
+                  .map(
+                    (e) => NavigationDestination(
+                      label: e.label,
+                      icon: _buildIcon(type: e),
+                      selectedIcon: _buildIcon(type: e, selected: true),
+                    ),
+                  )
+                  .toList(),
+            ),
           ),
         );
       } else {

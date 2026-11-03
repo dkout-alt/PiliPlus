@@ -75,8 +75,10 @@ abstract final class ThemeUtils {
           color: colorScheme.onSurface,
         ),
       ),
+      // MD3 level 2 为 surfaceContainer；此处提升到 High 以增强底栏层次（有意偏离一档）
       navigationBarTheme: NavigationBarThemeData(
-        surfaceTintColor: isDark ? colorScheme.surfaceContainerHighest : null,
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
       ),
       snackBarTheme: SnackBarThemeData(
         elevation: 20,
@@ -92,11 +94,21 @@ abstract final class ThemeUtils {
       popupMenuTheme: PopupMenuThemeData(
         surfaceTintColor: isDark ? colorScheme.surfaceContainerHighest : null,
       ),
+      // M3 卡片表面分层：浅色 filled（容器比页面深一档）/ 深色 outlined（同色 + 细描边）
       cardTheme: CardThemeData(
-        elevation: 1,
+        elevation: 0,
         margin: EdgeInsets.zero,
         shadowColor: Colors.transparent,
-        surfaceTintColor: isDark ? colorScheme.onSurfaceVariant : null,
+        surfaceTintColor: Colors.transparent,
+        color: isDark ? colorScheme.surface : colorScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          side: isDark
+              ? BorderSide(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                )
+              : BorderSide.none,
+        ),
       ),
       progressIndicatorTheme: isDark
           ? ProgressIndicatorThemeData(
@@ -181,7 +193,14 @@ abstract final class ThemeUtils {
         backgroundColor: Colors.black,
       ),
       cardTheme: theme.cardTheme.copyWith(
-        color: colorScheme.surfaceContainer.darken(0.75),
+        // 纯黑主题下卡片与页面同为黑色，只能靠描边区分层级
+        color: Colors.black,
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+        ),
       ),
       dialogTheme: theme.dialogTheme.copyWith(backgroundColor: color),
       bottomSheetTheme: theme.bottomSheetTheme.copyWith(
