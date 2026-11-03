@@ -56,7 +56,8 @@ class PBadge extends StatelessWidget {
         bgColor = colorScheme.secondaryContainer.withValues(alpha: 0.5);
         color = colorScheme.onSecondaryContainer;
       case PBadgeType.gray:
-        bgColor = Colors.black45;
+        // MD3 禁止硬编码颜色，改用 scrim 角色（叠在媒体上的遮罩）
+        bgColor = colorScheme.scrim.withValues(alpha: 0.6);
         color = Colors.white;
       case PBadgeType.error:
         if (colorScheme.isDark) {

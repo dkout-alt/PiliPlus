@@ -1,6 +1,6 @@
+import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
-import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/video_popup_menu.dart';
 import 'package:PiliPlus/http/search.dart';
@@ -20,7 +20,7 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 // 视频卡片 - 垂直布局（首页推荐流单列，无卡片容器）
-class VideoCardV extends StatelessWidget {
+class VideoCardV extends StatefulWidget {
   final BaseRcmdVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
@@ -30,8 +30,18 @@ class VideoCardV extends StatelessWidget {
     this.onRemove,
   });
 
+  @override
+  State<VideoCardV> createState() => _VideoCardVState();
+}
+
+class _VideoCardVState extends State<VideoCardV> {
   /// 文字区左右内边距（MD3 8dp 间距系统）
   static const _hPad = 16.0;
+
+  /// 隐藏的菜单锚点，长按时程序化唤起
+  final _menuKey = GlobalKey<PopupMenuButtonState<dynamic>>();
+
+  BaseRcmdVideoItemModel get videoItem => widget.videoItem;
 
   Future<void> onPushDetail() async {
     switch (videoItem.goto) {
@@ -56,6 +66,8 @@ class VideoCardV extends StatelessWidget {
           }
         }
         if (cid != null) {
+          // 记录封面矩形，供 /videoV 的 container transform 使用
+          final sourceRect = coverRectOf(context);
           PageUtils.toVideoPage(
             aid: videoItem.aid,
             bvid: bvid,
@@ -64,6 +76,9 @@ class VideoCardV extends StatelessWidget {
             title: videoItem.title,
             isVertical: isVertical,
             dimension: dimension,
+            extraArguments: sourceRect == null
+                ? null
+                : {kSourceRectKey: sourceRect},
           );
         }
         break;
@@ -82,88 +97,78 @@ class VideoCardV extends StatelessWidget {
     }
   }
 
+  void _openMenu() => _menuKey.currentState?.showButtonMenu();
+
   @override
   Widget build(BuildContext context) {
-    void onLongPress() => imageSaveDialog(
-      title: videoItem.title,
-      cover: videoItem.cover,
-      bvid: videoItem.bvid,
-    );
     final badges = _coverBadges();
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        InkWell(
-          onTap: onPushDetail,
-          onLongPress: onLongPress,
-          onSecondaryTap: PlatformUtils.isMobile ? null : onLongPress,
-          child: Column(
-            crossAxisAlignment: .start,
-            children: [
-              AspectRatio(
-                aspectRatio: Style.aspectRatio16x9,
-                child: LayoutBuilder(
-                  builder: (context, boxConstraints) {
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        NetworkImgLayer(
-                          src: videoItem.cover,
-                          width: boxConstraints.maxWidth,
-                          height: boxConstraints.maxHeight,
-                          borderRadius: BorderRadius.zero,
+    return InkWell(
+      onTap: onPushDetail,
+      onLongPress: _openMenu,
+      onSecondaryTap: PlatformUtils.isMobile ? null : _openMenu,
+      child: Column(
+        crossAxisAlignment: .start,
+        children: [
+          AspectRatio(
+            aspectRatio: Style.aspectRatio16x9,
+            child: LayoutBuilder(
+              builder: (context, boxConstraints) {
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    NetworkImgLayer(
+                      src: videoItem.cover,
+                      width: boxConstraints.maxWidth,
+                      height: boxConstraints.maxHeight,
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    if (badges.isNotEmpty)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Row(
+                          spacing: 4,
+                          mainAxisSize: .min,
+                          children: badges,
                         ),
-                        if (badges.isNotEmpty)
-                          Positioned(
-                            top: 8,
-                            left: 8,
-                            child: Row(
-                              spacing: 4,
-                              mainAxisSize: .min,
-                              children: badges,
+                      ),
+                    if (videoItem.duration > 0)
+                      PBadge(
+                        bottom: 6,
+                        right: 8,
+                        size: .small,
+                        type: .gray,
+                        text: DurationUtils.formatDuration(videoItem.duration),
+                      ),
+                    // 零视觉的菜单锚点：不可见、不拦截点击，仅提供弹出位置
+                    if (videoItem.goto == 'av')
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        width: 29,
+                        height: 29,
+                        child: IgnorePointer(
+                          child: Opacity(
+                            opacity: 0,
+                            child: VideoPopupMenu(
+                              menuKey: _menuKey,
+                              iconSize: 17,
+                              videoItem: videoItem,
+                              onRemove: widget.onRemove,
                             ),
                           ),
-                        if (videoItem.duration > 0)
-                          PBadge(
-                            bottom: 6,
-                            right: 8,
-                            size: .small,
-                            type: .gray,
-                            text: DurationUtils.formatDuration(
-                              videoItem.duration,
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              Expanded(
-                child: content(context),
-              ),
-            ],
-          ),
-        ),
-        // 三点按钮暂置于封面右上角，下一步改为长按唤起后移除
-        if (videoItem.goto == 'av')
-          Positioned(
-            top: 4,
-            right: 4,
-            width: 29,
-            height: 29,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: ColorScheme.of(context).scrim.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: VideoPopupMenu(
-                iconSize: 17,
-                videoItem: videoItem,
-                onRemove: onRemove,
-              ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
-      ],
+          Expanded(
+            child: content(context),
+          ),
+        ],
+      ),
     );
   }
 

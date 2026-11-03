@@ -29,17 +29,22 @@ class VideoPopupMenu extends StatelessWidget {
   final BaseSimpleVideoItemModel videoItem;
   final VoidCallback? onRemove;
 
+  /// 供外部（如长按手势）程序化唤起菜单
+  final Key? menuKey;
+
   const VideoPopupMenu({
     super.key,
     required this.iconSize,
     required this.videoItem,
     this.onRemove,
     this.menuItemHeight = 45,
+    this.menuKey,
   });
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton(
+      key: menuKey,
       padding: EdgeInsets.zero,
       icon: Icon(
         Icons.more_vert_outlined,
