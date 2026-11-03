@@ -13,50 +13,19 @@ class VideoCardVSkeleton extends StatelessWidget {
         crossAxisAlignment: .start,
         children: [
           AspectRatio(
-            aspectRatio: Style.aspectRatio,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: const .vertical(top: Style.imgRadius),
-              ),
-            ),
+            aspectRatio: Style.aspectRatio16x9,
+            child: ColoredBox(color: color),
           ),
           Expanded(
             child: Padding(
-              padding: const .fromLTRB(4, 5, 6, 6),
+              padding: const .fromLTRB(16, 12, 16, 8),
               child: Column(
                 crossAxisAlignment: .start,
-                mainAxisAlignment: .spaceBetween,
                 children: [
-                  Container(width: 200, height: 13, color: color),
-                  Container(
-                    height: 13,
-                    width: 140,
-                    color: color,
-                    margin: const .only(top: 5),
-                  ),
+                  _bar(color, height: 13),
+                  _bar(color, height: 13, width: 140, top: 5),
                   const Spacer(),
-                  Row(
-                    spacing: 8,
-                    children: [
-                      Container(
-                        height: 11,
-                        color: color,
-                        width: 40,
-                      ),
-                      Container(
-                        height: 11,
-                        color: color,
-                        width: 40,
-                      ),
-                    ],
-                  ),
-                  Container(
-                    height: 11,
-                    width: 75,
-                    color: color,
-                    margin: const .only(top: 5),
-                  ),
+                  _bar(color, height: 11, width: 100),
                 ],
               ),
             ),
@@ -65,4 +34,16 @@ class VideoCardVSkeleton extends StatelessWidget {
       ),
     );
   }
+
+  static Widget _bar(
+    Color color, {
+    required double height,
+    double? width,
+    double top = 0,
+  }) => Container(
+    width: width,
+    height: height,
+    margin: EdgeInsets.only(top: top),
+    color: color,
+  );
 }

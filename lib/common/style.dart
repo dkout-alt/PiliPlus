@@ -4,6 +4,9 @@ import 'package:material_ui/material_ui.dart'
 abstract final class Style {
   static const cardSpace = 8.0;
   static const safeSpace = 12.0;
+
+  /// 首页单列卡片之间的间距（MD3 8dp 间距系统）
+  static const cardGap = 16.0;
   static const mdRadius = BorderRadius.all(imgRadius);
   static const imgRadius = Radius.circular(10);
   static const borderRadius6 = BorderRadius.all(.circular(6));

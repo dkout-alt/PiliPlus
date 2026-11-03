@@ -29,34 +29,30 @@ class _RcmdPageState extends State<RcmdPage>
   Widget build(BuildContext context) {
     super.build(context);
     final colorScheme = ColorScheme.of(context);
-    return Container(
-      clipBehavior: .hardEdge,
-      margin: const .symmetric(horizontal: Style.safeSpace),
-      decoration: const BoxDecoration(borderRadius: Style.mdRadius),
-      child: refreshIndicator(
-        onRefresh: controller.onRefresh,
-        child: CustomScrollView(
-          controller: controller.scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const .only(top: Style.cardSpace, bottom: 100),
-              sliver: Obx(
-                () => _buildBody(colorScheme, controller.loadingState.value),
-              ),
+    // 单列布局：封面需贴屏幕边缘，故不再给页面加水平外边距与圆角裁切
+    return refreshIndicator(
+      onRefresh: controller.onRefresh,
+      child: CustomScrollView(
+        controller: controller.scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const .only(top: Style.cardSpace, bottom: 100),
+            sliver: Obx(
+              () => _buildBody(colorScheme, controller.loadingState.value),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
-    mainAxisSpacing: Style.cardSpace,
-    crossAxisSpacing: Style.cardSpace,
+    mainAxisSpacing: Style.cardGap,
+    crossAxisSpacing: Style.cardGap,
     maxCrossAxisExtent: Pref.recommendCardWidth,
-    childAspectRatio: Style.aspectRatio,
-    mainAxisExtent: MediaQuery.textScalerOf(context).scale(90),
+    childAspectRatio: Style.aspectRatio16x9,
+    mainAxisExtent: MediaQuery.textScalerOf(context).scale(84),
   );
 
   Widget _buildBody(

@@ -78,6 +78,13 @@ jobs:
                   flutter-version-file: pubspec.yaml
                   cache: true
 
+            # 复用同一份 debug keystore，避免每次构建签名不同导致必须卸载重装
+            - name: Cache debug keystore
+              uses: actions/cache@v4
+              with:
+                  path: ~/.android
+                  key: android-debug-keystore-v1
+
             - name: Apply Patch
               shell: pwsh
               run: lib/scripts/patch.ps1 android
@@ -100,7 +107,7 @@ jobs:
 
             - name: Flutter Build Release Apk
               if: ${{ github.event_name == 'workflow_dispatch' }}
-              run: flutter build apk --release --split-per-abi --dart-define-from-file=pili_release.json --no-pub
+              run: flutter build apk --release --split-per-abi --android-project-arg dev=1 --dart-define-from-file=pili_release.json --no-pub
 
             - name: Flutter Build Dev Apk
               if: ${{ github.event_name == 'pull_request' }}
