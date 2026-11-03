@@ -1,5 +1,6 @@
 import 'dart:ui' show lerpDouble;
 
+import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// 传给 `/videoV` 的 arguments key，值为被点击卡片封面的全局矩形
@@ -86,4 +87,29 @@ class _RectClipper extends CustomClipper<Rect> {
 
   @override
   bool shouldReclip(_RectClipper oldClipper) => oldClipper.rect != rect;
+}
+
+/// 包在 `/videoV` 外层：用路由自身的 animation 驱动容器变换。
+///
+/// GetX fork 的 [GetPage] 不支持逐路由过渡参数，因此过渡时长由
+/// 全局 `defaultTransition` 的时长决定；`PageUtils.toVideoPage` 在 push 前
+/// 会临时把全局过渡设为 noTransition，避免「滑动 + 生长」叠加。
+class ContainerTransformPage extends StatelessWidget {
+  const ContainerTransformPage({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final animation = ModalRoute.of(context)?.animation;
+    final sourceRect = containerTransformSource(Get.arguments);
+    if (animation == null || sourceRect == null) {
+      return child;
+    }
+    return ContainerTransform(
+      animation: animation,
+      sourceRect: sourceRect,
+      child: child,
+    );
+  }
 }

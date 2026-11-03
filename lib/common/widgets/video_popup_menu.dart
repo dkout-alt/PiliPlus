@@ -1,4 +1,5 @@
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
+import 'package:PiliPlus/common/widgets/image/image_save.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
 import 'package:PiliPlus/models/home/rcmd/result.dart';
@@ -95,6 +96,16 @@ class VideoPopupMenu extends StatelessWidget {
                       },
                     ),
                 ],
+                if (videoItem.cover?.isNotEmpty == true)
+                  _VideoCustomAction(
+                    '保存封面',
+                    const Icon(Icons.download_outlined, size: 16),
+                    () => imageSaveDialog(
+                      title: videoItem.title,
+                      cover: videoItem.cover,
+                      bvid: videoItem.bvid,
+                    ),
+                  ),
                 if (videoItem is! SpaceArchiveItem) ...[
                   _VideoCustomAction(
                     '访问：${videoItem.owner.name}',

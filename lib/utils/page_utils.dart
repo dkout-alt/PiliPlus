@@ -565,7 +565,17 @@ abstract final class PageUtils {
       secondRpIdKey: ?secondRpId,
       ...?extraArguments,
     };
-    return PageUtils.toDupNamed('/videoV', arguments: arguments, off: off);
+    // 该页使用容器变换过渡，需临时关闭全局过渡，避免「滑动 + 生长」叠加
+    final router = Get.rootController;
+    final prevTransition = router.defaultTransition;
+    if (prevTransition != Transition.noTransition) {
+      router.defaultTransition = Transition.noTransition;
+    }
+    try {
+      return PageUtils.toDupNamed('/videoV', arguments: arguments, off: off);
+    } finally {
+      router.defaultTransition = prevTransition;
+    }
   }
 
   static final _pgcRegex = RegExp(r'(ep|ss)(\d+)');

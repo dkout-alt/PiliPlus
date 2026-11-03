@@ -68,6 +68,7 @@ import 'package:PiliPlus/pages/video/view.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
 import 'package:PiliPlus/pages/whisper/view.dart';
 import 'package:PiliPlus/pages/whisper_detail/view.dart';
+import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:get/get.dart';
 
 class Routes {
@@ -77,8 +78,11 @@ class Routes {
     GetPage(name: '/home', page: () => const HomePage()),
     // 热门
     GetPage(name: '/hot', page: () => const HotPage()),
-    // 视频详情
-    GetPage(name: '/videoV', page: () => const VideoDetailPageV()),
+    // 视频详情（MD3 container transform：从被点击的封面矩形生长为整页）
+    GetPage(
+      name: '/videoV',
+      page: () => const ContainerTransformPage(child: VideoDetailPageV()),
+    ),
     //
     GetPage(name: '/webview', page: () => const WebviewPage()),
     // 设置
