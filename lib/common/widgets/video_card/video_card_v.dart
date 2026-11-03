@@ -46,6 +46,14 @@ class _VideoCardVState extends State<VideoCardV> {
 
   BaseRcmdVideoItemModel get videoItem => widget.videoItem;
 
+  /// 与 /videoV 的 Hero tag 保持一致（bvid 优先，退化用 aid 换算）
+  Object? get _heroId {
+    final bvid = videoItem.bvid;
+    if (bvid != null && bvid.isNotEmpty) return bvid;
+    final aid = videoItem.aid;
+    return aid == null ? null : IdUtils.av2bv(aid);
+  }
+
   Future<void> onPushDetail() async {
     switch (videoItem.goto) {
       case 'bangumi':
@@ -69,8 +77,6 @@ class _VideoCardVState extends State<VideoCardV> {
           }
         }
         if (cid != null) {
-          // 记录封面矩形，供 /videoV 的 container transform 使用
-          final sourceRect = coverRectOf(context);
           PageUtils.toVideoPage(
             aid: videoItem.aid,
             bvid: bvid,
@@ -79,7 +85,6 @@ class _VideoCardVState extends State<VideoCardV> {
             title: videoItem.title,
             isVertical: isVertical,
             dimension: dimension,
-            sourceRect: sourceRect,
           );
         }
         break;
@@ -117,11 +122,15 @@ class _VideoCardVState extends State<VideoCardV> {
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    NetworkImgLayer(
-                      src: videoItem.cover,
-                      width: boxConstraints.maxWidth,
-                      height: boxConstraints.maxHeight,
-                      borderRadius: BorderRadius.zero,
+                    Hero(
+                      tag: videoCoverHeroTag(_heroId),
+                      flightShuttleBuilder: videoCoverShuttle,
+                      child: NetworkImgLayer(
+                        src: videoItem.cover,
+                        width: boxConstraints.maxWidth,
+                        height: boxConstraints.maxHeight,
+                        borderRadius: BorderRadius.zero,
+                      ),
                     ),
                     if (badges.isNotEmpty)
                       Positioned(

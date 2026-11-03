@@ -578,7 +578,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       SizedBox(
                         width: maxWidth,
                         height: height,
-                        child: videoPlayer(width: maxWidth, height: height),
+                        // Hero tag 与 VideoCardV.videoCoverHeroTag 保持一致
+                        child: Hero(
+                          tag: 'videoCover-${Get.arguments?['bvid']}',
+                          child: videoPlayer(width: maxWidth, height: height),
+                        ),
                       ),
                       _buildHeaderOverlay(),
                     ],

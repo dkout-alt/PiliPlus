@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:PiliPlus/common/widgets/fractionally_sized_box.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/gallery_viewer.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/hero_dialog_route.dart';
@@ -543,8 +542,6 @@ abstract final class PageUtils {
     String? title,
     int? progress, // milliseconds
     Map? extraArguments,
-    /// 点击卡片的封面矩形；非空时视频详情页播放「容器变换」过渡
-    Rect? sourceRect,
     bool off = false,
     bool isVertical = false,
     Dimension? dimension,
@@ -568,18 +565,7 @@ abstract final class PageUtils {
       secondRpIdKey: ?secondRpId,
       ...?extraArguments,
     };
-    // 该页使用容器变换过渡，需临时关闭全局过渡，避免「滑动 + 生长」叠加
-    ContainerTransformSource.pending = sourceRect;
-    final router = Get.rootController;
-    final prevTransition = router.defaultTransition;
-    if (prevTransition != Transition.noTransition) {
-      router.defaultTransition = Transition.noTransition;
-    }
-    try {
-      return PageUtils.toDupNamed('/videoV', arguments: arguments, off: off);
-    } finally {
-      router.defaultTransition = prevTransition;
-    }
+    return PageUtils.toDupNamed('/videoV', arguments: arguments, off: off);
   }
 
   static final _pgcRegex = RegExp(r'(ep|ss)(\d+)');
