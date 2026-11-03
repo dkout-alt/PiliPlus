@@ -78,12 +78,26 @@ jobs:
                   flutter-version-file: pubspec.yaml
                   cache: true
 
-            # 复用同一份 debug keystore，避免每次构建签名不同导致必须卸载重装
+            # 固定 debug keystore：缓存单一文件（缓存整个目录曾导致 keystore 丢失），
+            # 缺失时用 keytool 生成，保证每次构建签名一致，可覆盖安装并保留数据
             - name: Cache debug keystore
               uses: actions/cache@v4
               with:
-                  path: ~/.android
-                  key: android-debug-keystore-v1
+                  path: ~/.android/debug.keystore
+                  key: android-debug-keystore-v2
+
+            - name: Ensure debug keystore
+              run: |
+                  mkdir -p "$HOME/.android"
+                  if [ ! -f "$HOME/.android/debug.keystore" ]; then
+                    keytool -genkeypair -v \
+                      -keystore "$HOME/.android/debug.keystore" \
+                      -storepass android -keypass android \
+                      -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+                      -dname "CN=Android Debug,O=Android,C=US"
+                  fi
+                  keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android \
+                    | grep -E 'Alias name|SHA256:' || true
 
             - name: Apply Patch
               shell: pwsh
