@@ -18,7 +18,7 @@ class VideoCardVSkeleton extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: const .fromLTRB(16, 12, 16, 8),
+              padding: const .fromLTRB(12, 12, 12, 8),
               child: Column(
                 crossAxisAlignment: .start,
                 mainAxisSize: .min,

@@ -38,8 +38,8 @@ class VideoCardV extends StatefulWidget {
 }
 
 class _VideoCardVState extends State<VideoCardV> {
-  /// 文字区左右内边距（MD3 8dp 间距系统）
-  static const _hPad = 16.0;
+  /// 文字区左右内边距（MD3 间距刻度：4/8/12/16/24）
+  static const _hPad = 12.0;
 
   /// 隐藏的菜单锚点，长按时程序化唤起
   final _menuKey = GlobalKey<PopupMenuButtonState<dynamic>>();

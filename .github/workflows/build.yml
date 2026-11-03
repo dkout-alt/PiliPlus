@@ -89,6 +89,18 @@ jobs:
               shell: pwsh
               run: lib/scripts/patch.ps1 android
 
+            # TODO: 临时诊断，确认 GetX 全局过渡时长参数后删除
+            - name: Debug GetX transition config
+              run: |
+                  set +e
+                  gx=$(ls -d "$HOME"/.pub-cache/git/getx-* 2>/dev/null | head -n1)
+                  echo "GETX_DIR=$gx"
+                  f=$(find "$gx" -name 'get_material_app.dart' 2>/dev/null | head -n1)
+                  echo "GET_MATERIAL_APP=$f"
+                  sed -n '1,130p' "$f"
+                  echo "=== transitionDuration refs ==="
+                  grep -rn 'transitionDuration' "$gx/lib" 2>/dev/null | head -n 40
+
             - name: Write key
               if: github.event_name == 'workflow_dispatch'
               run: |
