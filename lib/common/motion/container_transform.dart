@@ -1,6 +1,5 @@
 import 'dart:ui' show lerpDouble;
 
-import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// 传给 `/videoV` 的 arguments key，值为被点击卡片封面的全局矩形
@@ -89,27 +88,85 @@ class _RectClipper extends CustomClipper<Rect> {
   bool shouldReclip(_RectClipper oldClipper) => oldClipper.rect != rect;
 }
 
-/// 包在 `/videoV` 外层：用路由自身的 animation 驱动容器变换。
+/// 包在 `/videoV` 外层：自建控制器驱动容器变换。
 ///
-/// GetX fork 的 [GetPage] 不支持逐路由过渡参数，因此过渡时长由
-/// 全局 `defaultTransition` 的时长决定；`PageUtils.toVideoPage` 在 push 前
-/// 会临时把全局过渡设为 noTransition，避免「滑动 + 生长」叠加。
-class ContainerTransformPage extends StatelessWidget {
+/// 不依赖路由过渡时长（GetX fork 的 `GetPage` 无法设置逐路由过渡，
+/// 且 `noTransition` 下路由动画时长为 0），也不依赖 `Get.arguments`。
+/// 进入 400ms / 返回 200ms 由本控制器自行控制。
+class ContainerTransformPage extends StatefulWidget {
   const ContainerTransformPage({super.key, required this.child});
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    final animation = ModalRoute.of(context)?.animation;
-    final sourceRect = containerTransformSource(Get.arguments);
-    if (animation == null || sourceRect == null) {
-      return child;
+  State<ContainerTransformPage> createState() => _ContainerTransformPageState();
+}
+
+class _ContainerTransformPageState extends State<ContainerTransformPage>
+    with SingleTickerProviderStateMixin {
+  static const _enterDuration = Duration(milliseconds: 400);
+  static const _exitDuration = Duration(milliseconds: 200);
+
+  Rect? _sourceRect;
+  late final AnimationController _controller;
+  bool _popping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _sourceRect = ContainerTransformSource.pending;
+    // 一次性消费，避免后续从历史/相关视频进入时误用旧矩形
+    ContainerTransformSource.pending = null;
+    _controller = AnimationController(
+      vsync: this,
+      duration: _enterDuration,
+      reverseDuration: _exitDuration,
+    );
+    if (_sourceRect == null) {
+      _controller.value = 1;
+    } else {
+      _controller.forward();
     }
-    return ContainerTransform(
-      animation: animation,
-      sourceRect: sourceRect,
-      child: child,
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handlePop(Object? result) async {
+    // 防止连按返回触发多次 pop（会连带退出首页）
+    if (_popping) return;
+    _popping = true;
+    if (_sourceRect != null && _controller.value > 0) {
+      await _controller.reverse();
+    }
+    if (mounted) Navigator.of(context).pop(result);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sourceRect = _sourceRect;
+    if (sourceRect == null) {
+      return widget.child;
+    }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handlePop(result);
+      },
+      child: ContainerTransform(
+        animation: _controller,
+        sourceRect: sourceRect,
+        child: widget.child,
+      ),
     );
   }
+}
+
+/// 记录本次点击的封面矩形（一次性）
+abstract final class ContainerTransformSource {
+  static Rect? pending;
 }

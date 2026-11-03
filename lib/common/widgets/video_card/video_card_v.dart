@@ -79,9 +79,7 @@ class _VideoCardVState extends State<VideoCardV> {
             title: videoItem.title,
             isVertical: isVertical,
             dimension: dimension,
-            extraArguments: sourceRect == null
-                ? null
-                : {kSourceRectKey: sourceRect},
+            sourceRect: sourceRect,
           );
         }
         break;
