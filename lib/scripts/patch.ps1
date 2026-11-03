@@ -317,3 +317,33 @@ foreach ($patch in $patches_cupertino) {
         throw "$LASTEXITCODE"
     }
 }
+
+# ---- getx: page transition duration 300ms -> 500ms ----
+# GetX hardcodes the duration in get_transition_mixin.dart and GetMaterialApp
+# exposes no duration parameter. 500ms is the MD3 emphasized duration for
+# transitions that begin and end on screen (page to page navigation).
+# String replacement is used instead of a .patch file so that upstream line
+# shifts cannot break the build; if the literal is missing we only warn and
+# keep the original 300ms.
+$GetxDir = Get-ChildItem "$PubCacheDir/git" -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -like "getx-*" } |
+    Select-Object -Last 1
+
+if ($GetxDir) {
+    $GetxMixin = Join-Path $GetxDir.FullName "lib/get_navigation/src/routes/get_transition_mixin.dart"
+    if (Test-Path $GetxMixin) {
+        $oldLine = "Duration get transitionDuration => const Duration(milliseconds: 300);"
+        $newLine = "Duration get transitionDuration => const Duration(milliseconds: 500);"
+        $content = Get-Content $GetxMixin -Raw
+        if ($content.Contains($oldLine)) {
+            $content.Replace($oldLine, $newLine) | Set-Content $GetxMixin -NoNewline -Encoding utf8
+            Write-Host "getx transitionDuration -> 500ms"
+        } else {
+            Write-Warning "getx transitionDuration not matched, keeping original value"
+        }
+    } else {
+        Write-Warning "getx get_transition_mixin.dart not found"
+    }
+} else {
+    Write-Warning "getx package not found in pub cache"
+}
