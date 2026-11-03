@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/button/icon_button.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
@@ -62,11 +63,14 @@ class VideoCardHLater extends StatelessWidget {
                     return Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        NetworkImgLayer(
-                          src: videoItem.pic,
-                          width: maxWidth,
-                          height: maxHeight,
-                          cacheWidth: videoItem.dimension?.cacheWidth,
+                        videoCoverHero(
+                          videoItem.bvid,
+                          NetworkImgLayer(
+                            src: videoItem.pic,
+                            width: maxWidth,
+                            height: maxHeight,
+                            cacheWidth: videoItem.dimension?.cacheWidth,
+                          ),
                         ),
                         ?videoItem.label,
                         ...videoItem.progressIndicator(theme.colorScheme),

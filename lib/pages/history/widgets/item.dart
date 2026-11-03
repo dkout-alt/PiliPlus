@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/select_mask.dart';
@@ -68,12 +69,18 @@ class HistoryItem extends StatelessWidget {
                         return Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            NetworkImgLayer(
-                              src: item.cover?.isNotEmpty == true
-                                  ? item.cover
-                                  : item.covers?.firstOrNull ?? '',
-                              width: maxWidth,
-                              height: maxHeight,
+                            videoCoverHero(
+                              item.history.bvid ??
+                                  (item.history.oid != null
+                                      ? IdUtils.av2bv(item.history.oid!)
+                                      : null),
+                              NetworkImgLayer(
+                                src: item.cover?.isNotEmpty == true
+                                    ? item.cover
+                                    : item.covers?.firstOrNull ?? '',
+                                width: maxWidth,
+                                height: maxHeight,
+                              ),
                             ),
                             ?item.label,
                             if (hasDuration)
