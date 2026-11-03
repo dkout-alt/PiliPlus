@@ -318,10 +318,12 @@ foreach ($patch in $patches_cupertino) {
     }
 }
 
-# ---- getx: page transition duration 300ms -> 500ms ----
+# ---- getx: page transition duration 300ms -> 400ms ----
 # GetX hardcodes the duration in get_transition_mixin.dart and GetMaterialApp
-# exposes no duration parameter. 500ms is the MD3 emphasized duration for
-# transitions that begin and end on screen (page to page navigation).
+# exposes no duration parameter. 400ms is the MD3 emphasized-decelerate duration
+# (the value for entering the screen). It is used as a compromise because this
+# single getter drives BOTH push and pop, and a longer value makes the
+# home -> video Hero flight feel sluggish.
 # String replacement is used instead of a .patch file so that upstream line
 # shifts cannot break the build; if the literal is missing we only warn and
 # keep the original 300ms.
@@ -333,11 +335,11 @@ if ($GetxDir) {
     $GetxMixin = Join-Path $GetxDir.FullName "lib/get_navigation/src/routes/get_transition_mixin.dart"
     if (Test-Path $GetxMixin) {
         $oldLine = "Duration get transitionDuration => const Duration(milliseconds: 300);"
-        $newLine = "Duration get transitionDuration => const Duration(milliseconds: 500);"
+        $newLine = "Duration get transitionDuration => const Duration(milliseconds: 400);"
         $content = Get-Content $GetxMixin -Raw
         if ($content.Contains($oldLine)) {
             $content.Replace($oldLine, $newLine) | Set-Content $GetxMixin -NoNewline -Encoding utf8
-            Write-Host "getx transitionDuration -> 500ms"
+            Write-Host "getx transitionDuration -> 400ms"
         } else {
             Write-Warning "getx transitionDuration not matched, keeping original value"
         }
