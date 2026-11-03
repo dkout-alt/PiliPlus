@@ -1,4 +1,5 @@
 // 视频or合集
+import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/badge.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
@@ -50,12 +51,18 @@ Widget videoSeasonWidget(
             clipBehavior: Clip.none,
             children: [
               LayoutBuilder(
-                builder: (context, constraints) => NetworkImgLayer(
-                  width: constraints.maxWidth,
-                  height: constraints.maxWidth / Style.aspectRatio,
-                  src: cover,
-                  quality: 40,
-                ),
+                builder: (context, constraints) {
+                  final coverImg = NetworkImgLayer(
+                    width: constraints.maxWidth,
+                    height: constraints.maxWidth / Style.aspectRatio,
+                    src: cover,
+                    quality: 40,
+                  );
+                  // 仅纯视频动态启用共享元素过渡（与首页同路由，tag 带动态 id 保唯一）
+                  return item.type == 'DYNAMIC_TYPE_AV'
+                      ? videoCoverHero(dynVideoHeroId(item.idStr), coverImg)
+                      : coverImg;
+                },
               ),
               if (video.badge?.text case final badge?)
                 PBadge(

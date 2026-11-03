@@ -32,6 +32,13 @@ Widget videoCoverHero(String? id, Widget child) {
   );
 }
 
+/// 「与首页共路由」的来源（如动态页）通过该 arguments key 传入唯一 Hero id，
+/// 避免同一条视频在两个常驻页面里出现两个相同 tag 的 Hero
+const kHeroKeyArg = 'heroKey';
+
+/// 动态页 Hero id：同一条视频可能在列表里出现多行（如被转发两次），需加动态 id
+String dynVideoHeroId(String? dynamicId) => 'dyn-$dynamicId';
+
 /// 历史遗留：`PageUtils.toVideoPage` 仍会写入，当前未使用
 abstract final class ContainerTransformSource {
   static Rect? pending;

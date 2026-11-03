@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:PiliPlus/common/assets.dart';
+import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/common/widgets/flutter/pop_scope.dart';
@@ -578,9 +579,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       SizedBox(
                         width: maxWidth,
                         height: height,
-                        // Hero tag 与 VideoCardV.videoCoverHeroTag 保持一致
+                        // Hero tag 与 VideoCardV.videoCoverHeroTag 保持一致；
+                        // 动态页会通过 heroKey 传入带动态 id 的唯一值
                         child: Hero(
-                          tag: 'videoCover-${Get.arguments?['bvid']}',
+                          tag:
+                              'videoCover-${Get.arguments?[kHeroKeyArg] ?? Get.arguments?['bvid']}',
                           child: videoPlayer(width: maxWidth, height: height),
                         ),
                       ),

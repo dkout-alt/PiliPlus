@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:PiliPlus/common/motion/container_transform.dart';
 import 'package:PiliPlus/common/widgets/fractionally_sized_box.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/gallery_viewer.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/hero_dialog_route.dart';
@@ -310,6 +311,8 @@ abstract final class PageUtils {
               cover: cover,
               dimension: res!.dimension,
               title: archive.title,
+              // 动态页与首页同属一个路由，需用动态 id 保证 Hero tag 唯一
+              extraArguments: {kHeroKeyArg: dynVideoHeroId(item.idStr)},
             );
           }
         } catch (err) {
