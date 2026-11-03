@@ -265,12 +265,15 @@ class _VideoCardVState extends State<VideoCardV> {
     );
   }
 
-  /// UP名 · 播放量 · 发布日期
+  /// UP名 · 播放量 · 弹幕数 · 发布日期
   List<InlineSpan> _byline() {
     final spans = <InlineSpan>[
       TextSpan(text: videoItem.owner.name),
       TextSpan(text: ' · ${NumUtils.numFormat(videoItem.stat.view)}播放'),
     ];
+    if (videoItem.stat.danmu case final danmu?) {
+      spans.add(TextSpan(text: ' · ${NumUtils.numFormat(danmu)}弹幕'));
+    }
     if (videoItem.pubdate case final pubdate?) {
       spans.add(
         TextSpan(

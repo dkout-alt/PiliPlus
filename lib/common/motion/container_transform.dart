@@ -38,8 +38,3 @@ const kHeroKeyArg = 'heroKey';
 
 /// 动态页 Hero id：同一条视频可能在列表里出现多行（如被转发两次），需加动态 id
 String dynVideoHeroId(String? dynamicId) => 'dyn-$dynamicId';
-
-/// 历史遗留：`PageUtils.toVideoPage` 仍会写入，当前未使用
-abstract final class ContainerTransformSource {
-  static Rect? pending;
-}

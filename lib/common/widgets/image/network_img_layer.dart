@@ -15,7 +15,7 @@ class NetworkImgLayer extends StatelessWidget {
     required this.height,
     this.type = .def,
     this.fadeOutDuration = const Duration(milliseconds: 120),
-    this.fadeInDuration = const Duration(milliseconds: 120),
+    this.fadeInDuration = const Duration(milliseconds: 200),
     this.quality = 1,
     this.borderRadius = Style.mdRadius,
     this.getPlaceHolder,
