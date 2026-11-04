@@ -78,67 +78,29 @@ jobs:
                   flutter-version-file: pubspec.yaml
                   cache: true
 
-            # 固定 debug keystore：缓存单一文件（缓存整个目录曾导致 keystore 丢失），
-            # 缺失时用 keytool 生成，保证每次构建签名一致，可覆盖安装并保留数据
-            - name: Cache debug keystore
-              uses: actions/cache@v4
-              with:
-                  path: ~/.android/debug.keystore
-                  key: android-debug-keystore-v2
-
-            - name: Ensure debug keystore
-              run: |
-                  mkdir -p "$HOME/.android"
-                  if [ ! -f "$HOME/.android/debug.keystore" ]; then
-                    keytool -genkeypair -v \
-                      -keystore "$HOME/.android/debug.keystore" \
-                      -storepass android -keypass android \
-                      -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
-                      -dname "CN=Android Debug,O=Android,C=US"
-                  fi
-                  keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android \
-                    | grep -E 'Alias name|SHA256:' || true
-
             - name: Apply Patch
               shell: pwsh
               run: lib/scripts/patch.ps1 android
 
+            # 固定签名密钥：从 SIGN_KEYSTORE_BASE64 还原，保证每次构建签名一致 → 可覆盖安装。
+            # 先剔除可能混入的空白/换行，避免 "base64: invalid input"。
             - name: Write key
               if: github.event_name == 'workflow_dispatch'
               run: |
-                  if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
-                    echo "${{ secrets.SIGN_KEYSTORE_BASE64 }}" | base64 --decode > android/app/key.jks
-                    echo storeFile='key.jks' >> android/key.properties
-                    echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
-                    echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
-                    echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
-                  fi
-
-            # PowerShell 导出的 PKCS12 不会保留 FriendlyName，Java 读到的 alias 可能不是预期值，
-            # 这里在构建前把实际 alias 统一改名为 KEY_ALIAS 指定的名字
-            - name: Normalize keystore alias
-              if: github.event_name == 'workflow_dispatch'
-              run: |
-                  set +e
-                  KS=android/app/key.jks
-                  PASS="${{ secrets.KEYSTORE_PASSWORD }}"
-                  WANT="${{ secrets.KEY_ALIAS }}"
                   if [ -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
-                    echo "no keystore secret, skip"; exit 0
+                    echo "no keystore secret, falling back to debug signing"
+                    exit 0
                   fi
-                  if [ ! -f "$KS" ]; then
-                    echo "keystore missing, skip"; exit 0
-                  fi
-                  if keytool -list -keystore "$KS" -storepass "$PASS" -alias "$WANT" >/dev/null 2>&1; then
-                    echo "alias already matches, nothing to do"; exit 0
-                  fi
-                  CUR=$(keytool -list -keystore "$KS" -storepass "$PASS" 2>/dev/null | sed -n 's/^Alias name: //p' | head -n1 | tr -d '\r')
-                  echo "detected alias length=${#CUR}"
-                  if [ -z "$CUR" ]; then
-                    echo "cannot detect alias"; exit 0
-                  fi
-                  keytool -changealias -keystore "$KS" -storepass "$PASS" -alias "$CUR" -destalias "$WANT" -keypass "$PASS"
-                  echo "alias renamed successfully"
+                  printf '%s' "${{ secrets.SIGN_KEYSTORE_BASE64 }}" \
+                    | tr -d ' \t\r\n' \
+                    | base64 -d > android/app/key.jks
+                  echo storeFile='key.jks' >> android/key.properties
+                  echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
+                  echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
+                  echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
+                  echo "keystore size=$(stat -c%s android/app/key.jks) bytes"
+                  keytool -list -keystore android/app/key.jks \
+                    -storepass "${{ secrets.KEYSTORE_PASSWORD }}" || true
 
             - name: Set and Extract version
               if: ${{ github.event_name == 'workflow_dispatch' }}
