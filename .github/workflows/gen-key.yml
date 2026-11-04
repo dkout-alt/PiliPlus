@@ -1,0 +1,45 @@
+name: Generate signing key (one-off)
+
+# 一次性用途：用 keytool 生成固定签名密钥（JKS，alias 由参数直接指定，不会有 alias 丢失问题），
+# 并把 base64 文本作为 artifact 上传，便于可靠复制到仓库 secret SIGN_KEYSTORE_BASE64。
+#
+# 用法：
+#   1. Actions → Generate signing key (one-off) → Run workflow（分支选 main）
+#   2. 在 run 页面底部 Artifacts 下载 pili-keystore-base64
+#   3. 解压得到 pili.jks.base64，用记事本打开 → 全选复制
+#   4. 更新 secret SIGN_KEYSTORE_BASE64（其他 3 个 secret 不用动）
+#   5. 用完删除本文件（含 main 上的那份）
+
+on:
+  workflow_dispatch:
+
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate JKS
+        run: |
+          set -e
+          ALIAS="${{ secrets.KEY_ALIAS }}"
+          PASS="${{ secrets.KEYSTORE_PASSWORD }}"
+          if [ -z "$ALIAS" ]; then ALIAS="pili"; fi
+          if [ -z "$PASS" ]; then PASS="pili123456"; fi
+
+          keytool -genkeypair -v \
+            -keystore pili.jks \
+            -storepass "$PASS" -keypass "$PASS" \
+            -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=PiliPlus,O=Personal,C=CN"
+
+          echo "===== ENTRIES ====="
+          keytool -list -keystore pili.jks -storepass "$PASS"
+
+          base64 -w0 pili.jks > pili.jks.base64
+          echo "jks=$(stat -c%s pili.jks) bytes / base64=$(stat -c%s pili.jks.base64) chars"
+          echo "注意：alias 与密码已与现有 secret 保持一致，无需修改 KEY_ALIAS/KEYSTORE_PASSWORD"
+
+      - name: Upload base64 artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: pili-keystore-base64
+          path: pili.jks.base64
