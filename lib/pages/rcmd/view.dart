@@ -29,7 +29,8 @@ class _RcmdPageState extends State<RcmdPage>
   Widget build(BuildContext context) {
     super.build(context);
     final colorScheme = ColorScheme.of(context);
-    // 单列布局：封面需贴屏幕边缘，故不再给页面加水平外边距与圆角裁切
+    // 单列：封面贴屏幕边缘（方角）；多列：网格加水平内边距，封面圆角才成立
+    final hPad = _isGridMode ? _gridPadding : 0.0;
     return refreshIndicator(
       onRefresh: controller.onRefresh,
       child: CustomScrollView(
@@ -37,7 +38,12 @@ class _RcmdPageState extends State<RcmdPage>
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(
-            padding: const .only(top: Style.cardSpace, bottom: 100),
+            padding: EdgeInsets.only(
+              left: hPad,
+              right: hPad,
+              top: Style.cardSpace,
+              bottom: 100,
+            ),
             sliver: Obx(
               () => _buildBody(colorScheme, controller.loadingState.value),
             ),
@@ -47,9 +53,14 @@ class _RcmdPageState extends State<RcmdPage>
     );
   }
 
+  /// 多列模式判据：列宽上限被调低时才会出现多列
+  bool get _isGridMode => Pref.recommendCardWidth < 300;
+
+  static const _gridPadding = 12.0;
+
   late final gridDelegate = SliverGridDelegateWithExtentAndRatio(
     mainAxisSpacing: Style.cardGap,
-    crossAxisSpacing: Style.cardGap,
+    crossAxisSpacing: _isGridMode ? _gridPadding : Style.cardGap,
     maxCrossAxisExtent: Pref.recommendCardWidth,
     childAspectRatio: Style.aspectRatio16x9,
     mainAxisExtent: MediaQuery.textScalerOf(context).scale(80),

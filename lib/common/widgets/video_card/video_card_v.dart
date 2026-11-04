@@ -119,6 +119,10 @@ class _VideoCardVState extends State<VideoCardV> {
             aspectRatio: Style.aspectRatio16x9,
             child: LayoutBuilder(
               builder: (context, boxConstraints) {
+                // 多列时卡片较窄，封面需要圆角才能在网格中形成卡片边界
+                final coverRadius = boxConstraints.maxWidth < 280
+                    ? const BorderRadius.all(Radius.circular(12))
+                    : BorderRadius.zero;
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -129,7 +133,7 @@ class _VideoCardVState extends State<VideoCardV> {
                         src: videoItem.cover,
                         width: boxConstraints.maxWidth,
                         height: boxConstraints.maxHeight,
-                        borderRadius: BorderRadius.zero,
+                        borderRadius: coverRadius,
                       ),
                     ),
                     if (badges.isNotEmpty)
