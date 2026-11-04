@@ -21,7 +21,7 @@
 | 动效 | 页面过渡时长 300 → **400ms**（getx 补丁） | 不再"嗖一下" |
 | 动效 | 底栏/侧栏切换 fade-through（90/210ms） | 切换柔和 |
 | 细节 | 图片淡入 120 → 200ms；徽章底色 `black45` → `colorScheme.scrim` | 更柔和、符合规范 |
-| 构建 | `.dev` 包名后缀 + 固定 debug keystore | 与官方版共存、可覆盖升级 |
+| 构建 | `.dev` 包名后缀 + 固定签名密钥 | 与官方版共存、可覆盖升级 |
 
 提交历史：`git log --oneline c805f0b5b..HEAD`
 
@@ -287,9 +287,21 @@ git switch ui-polish && git merge main
 `.github/workflows/build.yml`：
 
 - `flutter build apk` 增加 `--android-project-arg dev=1` → 包名变 `com.example.piliplus.dev`，可与官方版共存
-- debug keystore 缓存（`~/.android/debug.keystore`，key `android-debug-keystore-v2`）+ 缺失时用 keytool 生成 → 保证每次构建签名一致，可覆盖安装且保留登录
+- 固定签名密钥：`Write key` 步骤从 secrets 还原 `android/app/key.jks`，保证每次构建签名一致 → 可覆盖安装且保留登录数据。所需 secrets：
 
-> 早期版本缓存了整个 `~/.android` 目录，实际只抓到 367 字节（keystore 未包含），导致每次构建签名不同、无法覆盖安装。已改为缓存单一文件。
+  | Secret | 说明 |
+  |---|---|
+  | `SIGN_KEYSTORE_BASE64` | JKS 密钥文件的 base64（必须由 `keytool -genkeypair -alias` 生成） |
+  | `KEYSTORE_PASSWORD` / `KEY_PASSWORD` | 密钥库 / 密钥密码 |
+  | `KEY_ALIAS` | 例：`pili` |
+
+  还原时用 `tr -d ' \t\r\n'` 剔除粘贴带入的空白与换行，避免 `base64: invalid input`。
+
+> 两种不可靠方案已废弃，勿再使用：
+> 1. **缓存 AGP 自动生成的 debug keystore** —— 该文件并不是 AGP 实际签名所用的密钥（实测它的 SHA256 恒定，构建签名却每次不同），签名仍会变化；
+> 2. **.NET `Export-PfxCertificate` 导出的 PKCS12** —— 文件里不保留 FriendlyName，Java 读到的 alias 与配置不符，报 `No key with alias`；而且 `keytool` 会因 `.jks` 后缀误按 JKS 解析该文件，连 alias 都列不出来。
+>
+> 结论：**签名密钥必须用 `keytool -genkeypair -alias <名字>` 显式生成（JKS），再以 base64 存进 secret 交给 CI。**
 
 ---
 
@@ -297,7 +309,7 @@ git switch ui-polish && git merge main
 
 | 症状 | 原因 | 处理 |
 |---|---|---|
-| 安装时提示"应用未安装"/签名冲突 | 构建签名与已装版本不同 | 首次需卸载重装；之后看 CI 日志里的 `SHA256:` 是否每次相同 |
+| 安装时提示"签名异常"/"应用未安装" | 构建签名与已装版本不同 | 首次需卸载重装；之后若仍失败，看 `Write key` 日志里 `keystore size=` 是否 ~2600 字节（只有几百字节说明密钥还原失败） |
 | 构建日志出现 `getx transitionDuration not matched` | GetX 版本变更，替换文本没匹配上 | 过渡时长退回 300ms（不影响功能）；按新源码更新 `patch.ps1` 里的 `$oldLine` |
 | 点视频卡片没有飞行动画 | tag 不一致：bvid 为 null、或动态页没传 `heroKey`、或目标不是 `/videoV` | 检查来源 id 与 `toVideoPage` 传入的 bvid 是否同源 |
 | 封面从奇怪的位置飞出 | 同一路由内出现两个相同 tag 的 Hero | 按 4.3 加唯一后缀 |
