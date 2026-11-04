@@ -1,0 +1,40 @@
+name: Generate signing key (one-off)
+
+# 一次性用途：用 keytool 生成一个标准 JKS 签名密钥，并把 base64 打印到日志。
+# 用法：
+#   1. Actions → Generate signing key (one-off) → Run workflow
+#   2. 复制日志里 ===BASE64_START=== 与 ===BASE64_END=== 之间的内容
+#   3. 更新仓库 secret：SIGN_KEYSTORE_BASE64 = 该内容
+#   4. 复制完请删除这次 run（日志里含私钥）
+#   5. 之后可删除本文件
+
+on:
+  workflow_dispatch:
+
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate JKS
+        run: |
+          set -e
+          PASS="${{ secrets.KEYSTORE_PASSWORD }}"
+          ALIAS="${{ secrets.KEY_ALIAS }}"
+          if [ -z "$PASS" ]; then
+            echo "ERROR: secret KEYSTORE_PASSWORD is empty"; exit 1
+          fi
+          if [ -z "$ALIAS" ]; then
+            ALIAS="pili"
+          fi
+          keytool -genkeypair -v \
+            -keystore pili.jks -storetype JKS \
+            -storepass "$PASS" -keypass "$PASS" \
+            -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=PiliPlus,O=Personal,C=CN"
+          echo "===== ALIAS CHECK ====="
+          keytool -list -keystore pili.jks -storetype JKS -storepass "$PASS" | sed -n 's/^Alias name: /alias=/p'
+          echo "=====BASE64_START====="
+          base64 -w0 pili.jks
+          echo ""
+          echo "=====BASE64_END====="
+          echo "size=$(stat -c%s pili.jks) bytes"
