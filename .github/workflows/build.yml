@@ -114,6 +114,32 @@ jobs:
                     echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
                   fi
 
+            # PowerShell 导出的 PKCS12 不会保留 FriendlyName，Java 读到的 alias 可能不是预期值，
+            # 这里在构建前把实际 alias 统一改名为 KEY_ALIAS 指定的名字
+            - name: Normalize keystore alias
+              if: github.event_name == 'workflow_dispatch'
+              run: |
+                  set +e
+                  KS=android/app/key.jks
+                  PASS="${{ secrets.KEYSTORE_PASSWORD }}"
+                  WANT="${{ secrets.KEY_ALIAS }}"
+                  if [ -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
+                    echo "no keystore secret, skip"; exit 0
+                  fi
+                  if [ ! -f "$KS" ]; then
+                    echo "keystore missing, skip"; exit 0
+                  fi
+                  if keytool -list -keystore "$KS" -storepass "$PASS" -alias "$WANT" >/dev/null 2>&1; then
+                    echo "alias already matches, nothing to do"; exit 0
+                  fi
+                  CUR=$(keytool -list -keystore "$KS" -storepass "$PASS" 2>/dev/null | sed -n 's/^Alias name: //p' | head -n1 | tr -d '\r')
+                  echo "detected alias length=${#CUR}"
+                  if [ -z "$CUR" ]; then
+                    echo "cannot detect alias"; exit 0
+                  fi
+                  keytool -changealias -keystore "$KS" -storepass "$PASS" -alias "$CUR" -destalias "$WANT" -keypass "$PASS"
+                  echo "alias renamed successfully"
+
             - name: Set and Extract version
               if: ${{ github.event_name == 'workflow_dispatch' }}
               shell: pwsh
