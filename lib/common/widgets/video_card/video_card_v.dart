@@ -235,37 +235,47 @@ class _VideoCardVState extends State<VideoCardV> {
   }
 
   Widget content(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Padding(
-      padding: const .fromLTRB(_hPad, 12, _hPad, 8),
-      child: Column(
-        crossAxisAlignment: .start,
-        mainAxisSize: .min,
-        children: [
-          Text(
-            videoItem.title,
-            maxLines: 2,
-            overflow: .ellipsis,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              height: 1.3,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text.rich(
-            TextSpan(
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 多列模式：字号按 MD3 比例降一档（bodyLarge→bodyMedium、bodySmall→labelSmall），
+        // 且文字与封面左右边缘对齐（封面已有网格外边距，文字不再额外缩进）
+        final isGrid = constraints.maxWidth < 280;
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final textTheme = theme.textTheme;
+        return Padding(
+          padding: isGrid
+              ? const EdgeInsets.fromLTRB(0, 12, 0, 8)
+              : const EdgeInsets.fromLTRB(_hPad, 12, _hPad, 8),
+          child: Column(
+            crossAxisAlignment: .start,
+            mainAxisSize: .min,
+            children: [
+              Text(
+                videoItem.title,
+                maxLines: 2,
+                overflow: .ellipsis,
+                style: (isGrid ? textTheme.bodyMedium : textTheme.bodyLarge)
+                    ?.copyWith(
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
               ),
-              children: _byline(),
-            ),
-            maxLines: 1,
-            overflow: .ellipsis,
+              const SizedBox(height: 2),
+              Text.rich(
+                TextSpan(
+                  style: (isGrid ? textTheme.labelSmall : textTheme.bodySmall)
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  children: _byline(),
+                ),
+                maxLines: 1,
+                overflow: .ellipsis,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
