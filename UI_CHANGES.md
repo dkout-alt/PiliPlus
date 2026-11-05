@@ -314,6 +314,8 @@ git switch ui-polish && git merge main
 | 点视频卡片没有飞行动画 | tag 不一致：bvid 为 null、或动态页没传 `heroKey`、或目标不是 `/videoV` | 检查来源 id 与 `toVideoPage` 传入的 bvid 是否同源 |
 | 封面从奇怪的位置飞出 | 同一路由内出现两个相同 tag 的 Hero | 按 4.3 加唯一后缀 |
 | 视频页顶部有纯黑条 | 上游设计（顶部 `padding.top` 高度的黑色块） | 设置 →「播放页移除安全边距」开启即可 |
+| 视频页封面短暂闪出黑底 + 小电视占位 | 缩略图 URL 由 `thumbnailUrl(src, quality)` 决定，`quality` 与列表卡片不一致会产生**另一个 URL**，缓存必然未命中 | 视频页封面不要传 `quality`（见 `lib/pages/video/view.dart` 中 `quality` 处的注释）。注意全局清晰度默认是 10，传 60 会覆盖成 `@60q` |
+| 再次点击当前底部标签无反应 | 切换逻辑早退了 `setIndex()`，而「回顶部 / 双击刷新」挂在它的 `else` 分支里 | 同标签必须调用 `setIndex(index)`，只是跳过过渡动画 |
 
 ---
 
