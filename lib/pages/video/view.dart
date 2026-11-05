@@ -1477,9 +1477,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                 onTap: handlePlay,
                 behavior: .opaque,
                 child: Obx(
+                  // 注意：不要传 quality。缩略图 URL 由 thumbnailUrl(src, quality) 决定，
+                  // 而全局清晰度默认是 10 —— 传 60 会得到 @60q 的另一个 URL，
+                  // 与列表卡片封面（@10q）不是同一份缓存，会先闪一下加载占位图。
                   () => NetworkImgLayer(
                     type: .emote,
-                    quality: 60,
                     src: videoDetailController.cover.value,
                     width: width,
                     height: height,
