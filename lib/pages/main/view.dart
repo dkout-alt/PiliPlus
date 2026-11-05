@@ -51,7 +51,12 @@ class _MainAppState extends PopScopeState<MainApp>
 
   /// 底栏/侧栏切换目的地：先淡出，切换后淡入（MD3 fade through）
   Future<void> _switchTab(int index) async {
-    if (_switching || index == _mainController.selectedIndex.value) {
+    // 过渡进行中不响应，避免两次 fade 交错
+    if (_switching) return;
+    // 同一个目的地：不做过渡（否则同一页面会无意义地闪一下），
+    // 但必须调用 setIndex —— 它的 else 分支负责「回顶部 / 双击刷新」，短路它会丢失该功能
+    if (index == _mainController.selectedIndex.value) {
+      _mainController.setIndex(index);
       return;
     }
     _switching = true;
