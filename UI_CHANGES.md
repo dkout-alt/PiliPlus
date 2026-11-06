@@ -123,7 +123,11 @@ $newLine = "Duration get transitionDuration => const Duration(milliseconds: 400)
 late final AnimationController _fadeController;   // duration: 210ms, reverseDuration: 90ms, value: 1
 
 Future<void> _switchTab(int index) async {
-  if (_switching || index == _mainController.selectedIndex.value) return;
+  if (_switching) return;                        // 过渡中不响应，避免两次 fade 交错
+  if (index == _mainController.selectedIndex.value) {
+    _mainController.setIndex(index);             // 同目的地：不做过渡，但必须交回业务逻辑
+    return;
+  }
   _switching = true;
   await _fadeController.reverse();   // 旧页淡出（此时仍可见）
   _mainController.setIndex(index);   // 不可见时切页
@@ -136,8 +140,18 @@ Future<void> _switchTab(int index) async {
 - 底栏 / 悬浮底栏 / 侧栏 Drawer / 侧栏 Rail 四处 `onDestinationSelected` 都指向 `_switchTab`
 - `MainController.setIndex` **一行未改**
 - 返回首页（`onPopInvoked` 里的 `setIndex(0)`）**故意保持瞬时**，避免返回手势带上延迟
+- **同一个目的地必须调用 `setIndex(index)`**：它的 `else` 分支挂着「回顶部 / 双击刷新」，早退会让该功能失效（曾发生过一次）
 
 **为什么**：`jumpToPage` 是瞬时切换，没有任何过渡，观感突兀。MD3 规定"顶层目的地之间"用 fade through，而不是方向性滑动。
+
+**与既有设置的交互**：上游已有「外观设置 → 首页切换页面动画」（`SettingBoxKey.mainTabBarView`，默认关闭，`needReboot: true`），实现是控制器二选一：
+
+| 设置 | 容器 | 切换方式 | 叠加我们的 fade-through 后 |
+|---|---|---|---|
+| 关闭（默认） | `PageView` | `jumpToPage`（瞬时） | 我们的 fade 接管，原本无动画 → ✅ |
+| 开启 | `TabBarView` | `TabController.animateTo`（平移，底栏横向 / 侧栏纵向） | **两层动画同时进行**（已知问题，未修改） |
+
+> 该叠加是"开启设置后才会出现"的边界情况，选择保留上游行为、不做额外干预，原因见第三章偏离记录第 6 条。
 
 ### 2.8 细节
 
@@ -161,6 +175,9 @@ Future<void> _switchTab(int index) async {
 | 3 | 页面过渡时长 | "同屏起止"过渡 = 500ms | 400ms | 该时长同时驱动 Hero 飞行，500ms 会让卡片展开显得拖沓 |
 | 4 | 首页单列 500dp | ≥600dp 建议多列 | 单列 | 不考虑平板；单列是该视觉设计的前提 |
 | 5 | 卡片文字边距 | 8dp 系统（8/16/24…） | 12dp | 12 在 MD3 间距刻度内，且是媒体列表常用值 |
+| 6 | 「首页切换页面动画」开启时的转场 | 顶层并列目的地应用 **fade through**；纵向位移（shared axis Y）应保留给**层级**导航 | 保留上游的 `TabBarView.animateTo`（底栏水平 / 侧栏**纵向**） | 上游既有功能、默认关闭、用户主动开启；改它会让设置项名不副实并增加同步冲突。**垂直平移在规范上不合规**（把并列目的地表达成父子关系），属已知偏离 |
+
+> 若将来要彻底规范化，有两个方向，但都属于"改上游语义"，需单独决策：① 侧栏（vertical）时忽略该设置、一律用 fade；② 把 `scrollDirection` 固定为 `.horizontal`。
 
 **已确认不做**（避免过度改动）：
 
@@ -352,3 +369,27 @@ lib/pages/main/view.dart                    fade-through + 底栏分隔线
 lib/utils/theme_utils.dart                  cardTheme / navigationBarTheme
 lib/scripts/patch.ps1                       getx 过渡时长补丁
 ```
+
+---
+
+## 九、维护约定（踩过的坑）
+
+在动手之前先过一遍这三条，它们都对应真实发生过的回归：
+
+### 1. 讨论新增 / 改变功能前，先扫一遍设置项
+
+`lib/pages/setting/models/` 下的 `style_settings.dart`、`play_settings.dart` 等就是功能清单。上游往往**已经实现了**你想要的东西，只是藏在一个开关或对话框后面。
+
+> 实例：以为需要"新增"再次点击底栏回到顶部/刷新，实际上游早已实现（`MainController.setIndex` 的 `else` 分支）；也没注意到「首页切换页面动画」这个开关的存在。
+
+### 2. 短路一个函数调用前，确认它在"相同参数"下没有副作用
+
+不要用"看起来等价"的早退替代调用。滚动、刷新、埋点、节流计时器都是副作用。
+
+> 实例：`_switchTab` 里 `index == selectedIndex` 时直接 `return`，把「回顶部 / 双击刷新」整个功能短路掉了 —— 那段逻辑就挂在 `setIndex` 的 `else` 分支里。
+
+### 3. 接管某个区域的视觉连续性时，检查它依赖的资源是否与来源一致
+
+Hero / crossfade / 共享元素会让"两处各自渲染"变成"同一张图必须连续"，此时任何参数差异都会显形：不只是 URL 字符串，还包括 `quality`（会影响 URL）、`尺寸`、`borderRadius`、`type`。
+
+> 实例：视频页封面传了 `quality: 60`，而列表卡片用默认值（被 `max(…, 10)` 抬到 10）→ 两个不同 URL → 落地时重新下载 → 闪一下占位图。原生过渡里几乎不可见，Hero 一来就成了明显缺陷。
