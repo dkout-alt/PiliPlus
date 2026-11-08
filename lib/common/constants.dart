@@ -1,6 +1,7 @@
 abstract final class Constants {
   static const appName = 'PiliPlus';
-  static const sourceCodeUrl = 'https://github.com/bggRGjQaUbCoE/PiliPlus';
+  // 本 fork 的源码地址（原名指向上游，本 fork 全站链接统一指向自己的仓库）
+  static const sourceCodeUrl = 'https://github.com/dkout-alt/PiliPlus';
 
   // 27eb53fc9058f8c3  移动端 Android
   // 4409e2ce8ffd12b8  HD版

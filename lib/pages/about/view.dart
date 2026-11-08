@@ -123,7 +123,7 @@ class _AboutPageState extends State<AboutPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '使用Flutter开发的B站第三方客户端',
+                  '对PiliPlus进行动画调优的分支',
                   style: TextStyle(color: outline),
                   semanticsLabel: '与你一起，发现不一样的世界',
                 ),
