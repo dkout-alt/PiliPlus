@@ -338,6 +338,35 @@ git switch ui-polish && git merge main
 
 ## 七、未做 / 已放弃
 
+### 待解决（已知问题，暂不处理）
+
+| # | 问题 | 现状与原因 |
+|---|---|---|
+| 1 | **UP 主主页的视频卡片没有 Hero 过渡** | 该族使用的是专用卡片（`member_video/widgets/video_card_h_member_video.dart`、`member_home/widgets/video_card_v_member_home.dart`、`member_search/child/widgets/search_archive_grpc.dart`、`member_season_series/...`），封面是裸 `NetworkImgLayer`，未接 `videoCoverHero`。排查结论：这些卡片的数据模型（`SpaceArchiveItem` 等）与交互（PGC/课程走 `viewPgcFromUri`、直传 `cid`、竖屏判断、「上次观看」遮罩）确实不同，独立成类是合理的；但也因此**复制了一份渲染代码**，属于上游的架构常态。<br>修法：每处 2 行（import + `videoCoverHero(bvid, cover)`），**本次决定不做**。<br>注：`member_pgc` 走番剧页，本来就不应加。 |
+| 2 | **封面滚出视口后返回，封面会从屏幕外飞入** | 详见下节「附：关于共享元素不可见」。 |
+
+#### 附：关于共享元素不可见
+
+MD3 的 **container transform**（Flutter `Hero` 就是它的实现）有一个适用前提：**共享元素在起止两个界面都可见**。不可见时规范的取向是**退化为 fade through**，而不是让元素从屏幕外飞入。
+
+> 注意：material-3 skill 的文本里并没有针对"共享元素滚出视口"的专门条款，上述为 container transform 的前提推论，而非逐字条文。
+
+**成因**：视频页的 Hero 位于可滚动头部内。向上滚动越过封面后，该 RenderBox 仍在树中（在 cacheExtent 内），`localToGlobal` 得到**负坐标**，于是飞行器从视口上方起飞 → "从屏幕外飞进来"。
+
+**可行修法**：用 `HeroMode(enabled: isCoverVisible)` 包住头部播放器。封面在视口内才注册 Hero；滚出后不注册 → 返回时找不到匹配目的地 → **退化为普通路由过渡**。正向进入不受影响（源端卡片必然可见）。
+
+可见性判据三种取法：
+
+| 方案 | 判据 | 评价 |
+|---|---|---|
+| A | `scrollOffset >= 头部高度` | 最省，需接滚动偏移 |
+| B | pop 前用 `RenderBox.localToGlobal` 判断 | 侵入性强 |
+| C | 头部 sliver 已有的折叠状态字段 | 若有现成状态最干净 |
+
+实现前需先确认视频页头部的滚动结构（`SliverPersistentHeader` 还是普通 sliver、有无现成的 offset 监听）。
+
+### 已放弃
+
 | 项 | 原因 |
 |---|---|
 | 单列改 `SliverList`（根治 1 行标题的间距偏大）、「上次看到这里」卡片缩小 | 会动列表结构 |

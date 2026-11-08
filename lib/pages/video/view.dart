@@ -567,6 +567,9 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                         videoDetailController.isCollapsing
                   ? videoDetailController.animHeight
                   : videoDetailController.videoHeight;
+              // 播放器子树提到 Obx 之外构造：scrollRatio 在折叠过程中每帧变化，
+              // 若在 builder 内部构造会导致播放器每帧重建
+              final player = videoPlayer(width: maxWidth, height: height);
               return [
                 VideoHeader(
                   minExtent: kToolbarHeight,
@@ -579,12 +582,20 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
                       SizedBox(
                         width: maxWidth,
                         height: height,
-                        // Hero tag 与 VideoCardV.videoCoverHeroTag 保持一致；
-                        // 动态页会通过 heroKey 传入带动态 id 的唯一值
-                        child: Hero(
-                          tag:
-                              'videoCover-${Get.arguments?[kHeroKeyArg] ?? Get.arguments?['bvid']}',
-                          child: videoPlayer(width: maxWidth, height: height),
+                        child: Obx(
+                          // scrollRatio == 1 表示视频已折叠到只剩标题栏（封面完全不可见）。
+                          // 此时若仍注册 Hero，返回时封面会「从屏幕外飞入」，观感诡异；
+                          // 禁用后找不到匹配目的地，自然退化为普通路由过渡。
+                          () => HeroMode(
+                            enabled: videoDetailController.scrollRatio.value < 1,
+                            // Hero tag 与 VideoCardV.videoCoverHeroTag 保持一致；
+                            // 动态页会通过 heroKey 传入带动态 id 的唯一值
+                            child: Hero(
+                              tag:
+                                  'videoCover-${Get.arguments?[kHeroKeyArg] ?? Get.arguments?['bvid']}',
+                              child: player,
+                            ),
+                          ),
                         ),
                       ),
                       _buildHeaderOverlay(),
