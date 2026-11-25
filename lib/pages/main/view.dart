@@ -30,50 +30,18 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends PopScopeState<MainApp>
-    with
-        RouteAware,
-        RouteAwareMixin,
-        WidgetsBindingObserver,
-        SingleTickerProviderStateMixin {
+    with RouteAware, RouteAwareMixin, WidgetsBindingObserver {
   final _mainController = Get.put(MainController());
   late EdgeInsets _padding;
   late ColorScheme _colorScheme;
   Brightness? _brightness;
 
-  /// MD3 fade through：淡出 90ms / 淡入 210ms
-  late final AnimationController _fadeController;
-  bool _switching = false;
-
   @override
   bool get initCanPop => false;
-
-  /// 底栏/侧栏切换目的地：先淡出，切换后淡入（MD3 fade through）
-  Future<void> _switchTab(int index) async {
-    // 过渡进行中不响应，避免两次 fade 交错
-    if (_switching) return;
-    // 同一个目的地：不做过渡（否则同一页面会无意义地闪一下），
-    // 但必须调用 setIndex —— 它的 else 分支负责「回顶部 / 双击刷新」，短路它会丢失该功能
-    if (index == _mainController.selectedIndex.value) {
-      _mainController.setIndex(index);
-      return;
-    }
-    _switching = true;
-    await _fadeController.reverse();
-    if (!mounted) return;
-    _mainController.setIndex(index);
-    await _fadeController.forward();
-    _switching = false;
-  }
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 210),
-      reverseDuration: const Duration(milliseconds: 90),
-      value: 1,
-    );
     addObserverMobile(this);
     if (Platform.isMacOS) {
       HardwareKeyboard.instance.addHandler(_handleKeyEvent);
@@ -144,7 +112,6 @@ class _MainAppState extends PopScopeState<MainApp>
       TrayController.instance.dispose();
     }
     removeObserverMobile(this);
-    _fadeController.dispose();
     PiliScheme.listener?.cancel();
     GStorage.close();
     super.dispose();
@@ -187,7 +154,7 @@ class _MainAppState extends PopScopeState<MainApp>
       if (_mainController.floatingNavBar) {
         bottomNav = Obx(
           () => FloatingNavigationBar(
-            onDestinationSelected: _switchTab,
+            onDestinationSelected: _mainController.setIndex,
             selectedIndex: _mainController.selectedIndex.value,
             destinations: _mainController.navigationBars
                 .map(
@@ -202,29 +169,19 @@ class _MainAppState extends PopScopeState<MainApp>
         );
       } else if (_mainController.enableMYBar) {
         bottomNav = Obx(
-          // MD3 底栏靠色调分层，浅色下对比不足，补一条 1dp 装饰性分隔线
-          () => DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: _colorScheme.outlineVariant.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
-            child: NavigationBar(
-              maintainBottomViewPadding: true,
-              onDestinationSelected: _switchTab,
-              selectedIndex: _mainController.selectedIndex.value,
-              destinations: _mainController.navigationBars
-                  .map(
-                    (e) => NavigationDestination(
-                      label: e.label,
-                      icon: _buildIcon(type: e),
-                      selectedIcon: _buildIcon(type: e, selected: true),
-                    ),
-                  )
-                  .toList(),
-            ),
+          () => NavigationBar(
+            maintainBottomViewPadding: true,
+            onDestinationSelected: _mainController.setIndex,
+            selectedIndex: _mainController.selectedIndex.value,
+            destinations: _mainController.navigationBars
+                .map(
+                  (e) => NavigationDestination(
+                    label: e.label,
+                    icon: _buildIcon(type: e),
+                    selectedIcon: _buildIcon(type: e, selected: true),
+                  ),
+                )
+                .toList(),
           ),
         );
       } else {
@@ -296,7 +253,7 @@ class _MainAppState extends PopScopeState<MainApp>
                   /// apply `lib/scripts/navigation_drawer.patch`
                   flex: 5,
                   backgroundColor: Colors.transparent,
-                  onDestinationSelected: _switchTab,
+                  onDestinationSelected: _mainController.setIndex,
                   selectedIndex: _mainController.selectedIndex.value,
                   header: Expanded(flex: 4, child: userAndSearchVertical()),
                   tilePadding: const .symmetric(vertical: 5, horizontal: 12),
@@ -336,7 +293,7 @@ class _MainAppState extends PopScopeState<MainApp>
           labelType: _mainController.hideSideBarLabel ? .none : .selected,
           leading: userAndSearchVertical(),
           backgroundColor: Colors.transparent,
-          onDestinationSelected: _switchTab,
+          onDestinationSelected: _mainController.setIndex,
           selectedIndex: _mainController.selectedIndex.value,
           destinations: _mainController.navigationBars
               .map(
@@ -406,10 +363,7 @@ class _MainAppState extends PopScopeState<MainApp>
       child: MainLayout(
         sideBar: sideBar,
         bottomNav: bottomNav,
-        body: Padding(
-          padding: padding,
-          child: FadeTransition(opacity: _fadeController, child: child),
-        ),
+        body: Padding(padding: padding, child: child),
       ),
     );
 

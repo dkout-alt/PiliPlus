@@ -13,13 +13,13 @@
 | 类别 | 内容 | 可见效果 |
 |---|---|---|
 | 首页外观 | 单列布局、去 Card 容器、封面全宽 16:9、标题 w600、边距收紧 | YouTube 风格单列信息流 |
-| 默认值 | 主页推荐流列宽上限 240 → **500dp** | 新装即单列 |
+| ~~默认值~~ | ~~主页推荐流列宽上限 240 → 500dp~~ | **已撤销**，见 §2.2 |
 | 交互 | 三点按钮移除，改长按唤起菜单（含「保存封面」） | 卡片轮廓干净 |
 | 交互 | 动态页「Live(N)」文案移除，只留折叠箭头 | 更简洁 |
-| 主题 | `cardTheme` 改为 MD3 色调分层；底栏加分隔线 + 提升色调 | 卡片和底栏层次分明 |
+| 主题 | `cardTheme` 改为 MD3 色调分层；底栏提升色调 | 卡片与底栏层次分明（底栏分隔线已撤销） |
 | 动效 | **视频封面 Hero 过渡**，覆盖 16 个入口 | 封面飞入/飞回视频页 |
 | 动效 | 页面过渡时长 300 → **400ms**（getx 补丁） | 不再"嗖一下" |
-| 动效 | 底栏/侧栏切换 fade-through（90/210ms） | 切换柔和 |
+| ~~动效~~ | ~~底栏/侧栏切换 fade-through~~ | **已撤销**，见 §2.7 |
 | 细节 | 图片淡入 120 → 200ms；徽章底色 `black45` → `colorScheme.scrim` | 更柔和、符合规范 |
 | 构建 | `.dev` 包名后缀 + 固定签名密钥 | 与官方版共存、可覆盖升级 |
 
@@ -45,18 +45,13 @@
 
 **注意**：`mainAxisExtent` 是**固定值**。标题 1 行时，剩余空间会落到卡片底部，导致该行的卡片间距略大（2 行标题约 16dp，1 行标题约 33dp）。这是"固定高度网格"的固有限制，若要根治需把单列改成 `SliverList`（未做，见第五章）。
 
-### 2.2 默认列宽 500dp
+### 2.2 默认列宽 —— 已撤销
 
-**文件**：`lib/utils/storage_pref.dart`、`lib/pages/setting/models/style_settings.dart`
+曾把 `Pref.recommendCardWidth` 的默认值从 `240` 改成 `500`（新装即单列）。
 
-```dart
-static double get recommendCardWidth =>
-    _setting.get(SettingBoxKey.recommendCardWidth, defaultValue: 500.0);
-```
+**2026-11 撤销**：双列模式的观感问题已通过「网格边距 + 封面圆角 + 字号降档」（见 §2.9）解决，不再需要用"默认单列"来回避。撤销后 `lib/utils/storage_pref.dart` 与 `lib/pages/setting/models/style_settings.dart` **与上游完全一致**，从本 fork 的改动清单中移除。
 
-**为什么**：只有单列模式下，"无容器的全宽封面卡片"才成立；双列（240dp）下卡片失去分隔线，观感变差。
-
-**注意**：默认值只对**从未写过该设置项**的安装生效。老用户需在「外观设置 → 列表宽度限制」手动调。
+> 单列布局仍然可用 —— 只是不再作为默认值，用户可在「外观设置 → 列表最大列宽度」自行调高到 500dp 以上。
 
 ### 2.3 长按菜单替代三点按钮
 
@@ -85,8 +80,7 @@ static double get recommendCardWidth =>
 底栏（`NavigationBar`）：
 
 - `navigationBarTheme.backgroundColor = surfaceContainerHigh`（规范 level 2 是 `surfaceContainer`，此处**有意提升一档**以获得足够的层次）
-- 顶部加 1dp `outlineVariant` 装饰性分隔线（MD3 中 `outline-variant` 的官方用途包含 dividers）
-- 分隔线只作用于 MD3 底栏；悬浮底栏与旧式 `BottomNavigationBar` 保持原样
+- ~~顶部加 1dp `outlineVariant` 装饰性分隔线~~ —— **2026-11 已撤销**：`DecoratedBox` 默认把装饰画在子组件**下方**，被 `NavigationBar` 的不透明背景完全遮住，实际从未显示，属无效代码
 
 **为什么**：原 `cardTheme` 设了 `elevation: 1` 却把 `shadowColor` 涂透明，等于没有海拔；深色下还用 `onSurfaceVariant`（前景色）做 `surfaceTint`，会让卡片发灰。底栏则因为 `surfaceContainer` 与页面 `surface` 只差一档，浅色下几乎看不出分层。
 
@@ -114,9 +108,11 @@ $newLine = "Duration get transitionDuration => const Duration(milliseconds: 400)
 
 **注意**：该 getter 同时控制**进入与返回**，所以返回也是 400ms（MD3 规范里"退出"是 200ms）。如果要更细的控制，需要额外插入 `reverseTransitionDuration` getter（未做）。
 
-### 2.7 动效：底栏 fade-through
+### 2.7 动效：底栏 fade-through —— 已撤销
 
-**文件**：`lib/pages/main/view.dart`
+> **2026-11 撤销**：上游在外观设置里已有「首页切换页面动画」。我们的 fade 会与它的滑动叠加成两套动画，且 `main/view.dart` 因此成为每次同步的冲突点。整套实现已移除，`main/view.dart` **与上游完全一致**，切换动画完全交还上游。以下是实现留档。
+
+**文件**：`lib/pages/main/view.dart`（已恢复原样）
 
 ```dart
 // MD3 fade through：淡出 90ms / 淡入 210ms
@@ -173,9 +169,9 @@ Future<void> _switchTab(int index) async {
 | 1 | 底栏容器色 | Level 2 = `surfaceContainer` | `surfaceContainerHigh`（Level 3） | 浅色下 level 2 与页面几乎同色，层次不足 |
 | 2 | 视频详情过渡 | 应遵循用户的「页面过渡动画」设置 | **强制**使用 Hero 容器变换 | 用户明确要求；该过渡与"卡片→播放器"的共享元素强绑定 |
 | 3 | 页面过渡时长 | "同屏起止"过渡 = 500ms | 400ms | 该时长同时驱动 Hero 飞行，500ms 会让卡片展开显得拖沓 |
-| 4 | 首页单列 500dp | ≥600dp 建议多列 | 单列 | 不考虑平板；单列是该视觉设计的前提 |
+| 4 | ~~首页单列 500dp~~ | — | **已撤销**（详见 §2.2） | — |
 | 5 | 卡片文字边距 | 8dp 系统（8/16/24…） | 12dp | 12 在 MD3 间距刻度内，且是媒体列表常用值 |
-| 6 | 「首页切换页面动画」开启时的转场 | 顶层并列目的地应用 **fade through**；纵向位移（shared axis Y）应保留给**层级**导航 | 保留上游的 `TabBarView.animateTo`（底栏水平 / 侧栏**纵向**） | 上游既有功能、默认关闭、用户主动开启；改它会让设置项名不副实并增加同步冲突。**垂直平移在规范上不合规**（把并列目的地表达成父子关系），属已知偏离 |
+| 6 | ~~「首页切换页面动画」开启时的转场~~ | — | **已撤销**：我们的 fade 已移除 | 滑动完全交还上游，不再有叠加问题 |
 
 > 若将来要彻底规范化，有两个方向，但都属于"改上游语义"，需单独决策：① 侧栏（vertical）时忽略该设置、一律用 fade；② 把 `scrollDirection` 固定为 `.horizontal`。
 
@@ -285,7 +281,7 @@ git switch ui-polish && git merge main
 |---|---|---|---|
 | 🔴 高 | `video_card_v.dart` | **约 200 行重写**（表现层整体替换） | 冲突时保留我们的结构；**但要检查上游是否改了 `onPushDetail()`**（cid 获取、`ab2cWithDimension` 那段）—— 有 bug 修复需手工移植 |
 | 🟡 中 | `up_panel.dart` | 约 30 行（主要是删除） | 保留"只留箭头"的版本 |
-| 🟡 中 | `main/view.dart` | 约 40 行（fade-through + 底栏分隔线） | 保留我们的版本 |
+| ⚪ 无 | `main/view.dart` | **0**（fade-through 与底栏分隔线均已撤销） | 与上游一致，无需处理 |
 | 🟡 中 | `patch.ps1` | 末尾 +28 行（getx 补丁） | 保留该段 |
 | 🟡 中 | `theme_utils.dart` | 约 25 行（cardTheme / navigationBarTheme） | 保留我们的版本 |
 | 🟡 中 | `rcmd/view.dart` | 约 35 行 | 保留（去 Container、16:9、extent 80） |
@@ -320,6 +316,47 @@ git switch ui-polish && git merge main
 >
 > 结论：**签名密钥必须用 `keytool -genkeypair -alias <名字>` 显式生成（JKS），再以 base64 存进 secret 交给 CI。**
 
+### 5.5 同步记录
+
+#### 2026-11-25 · 上游 2.2.0 → 2.2.1
+
+规模：上游 **61 个提交 / 208 个文件**；本 fork 改过 28 个文件；**重叠仅 9 个**。
+
+| 重叠文件 | 上游改动 | 处置 |
+|---|---|---|
+| `rcmd/view.dart` | **把 `Container` 包装加回来了** + 桌面刷新 FAB + `key: controller.refreshKey` | **手工融合**：保持"无 Container"（贴边封面），采纳 `refreshKey` 与 FAB |
+| `skeleton/video_card_v.dart` | 新增 `skeleton` 参数 + 布局重构 | 保留我们的布局，**但接受上游新增的 `skeleton` 形参** |
+| `main/view.dart` | 删 `context_ext`/`size_ext` import，改用 `MediaQuery.isPortraitOf/isTabletOf` | 自动合并（我们只改了动画区域） |
+| `page_utils.dart` | 文章跳转重构、`MediaQuery` 化 | 自动合并（我们只加 1 个 import + 1 个参数） |
+| `history/widgets/item.dart` | 文章分支重构 | 自动合并（我们只包了封面 Hero） |
+| `patch.ps1` | 新增 `$MediaQueryPatch` 并加入补丁数组 | 自动合并，getx 补丁段落保留完好 |
+| `storage_pref.dart` / `style_settings.dart` / `api.dart` | 各自新增内容 | 自动合并（区域不重叠） |
+
+**未冲突的关键项**（风险最高的反而没事）：
+
+- `video_card_v.dart`（我们整份重写的卡片）—— 上游**没有碰**
+- `container_transform.dart`（新增文件）—— 上游没有
+- `theme_utils.dart` / `up_panel.dart` / `video/view.dart` / 各卡片 Hero 接线 —— 上游没有
+
+**上游的连带变化（必须跟着接受）**：
+
+1. 删除 `lib/utils/extension/context_ext.dart`，全库 25 处调用点改用 `MediaQuery.isPortraitOf / isTabletOf` 等**新增的 Flutter API**
+2. 配套新增补丁 `lib/scripts/media_query.patch`（`patch.ps1` 已包含）—— **这个补丁不能丢**，否则上述 API 不存在，编译直接失败
+3. `pubspec` 版本变为 `2.2.1`；构建时 `build.ps1` 会用提交数覆盖 versionCode
+
+**踩到的坑**：用 `git checkout --ours` 整份保留骨架屏，把上游新增的 `skeleton` 形参一起丢掉了，而调用点（`color_select.dart` 的颜色预览）已被上游更新 → 编译报 `No named parameter with the name 'skeleton'`。
+
+> **教训**：`--ours` 会连**接口变更**一起丢掉。整份保留前，先用 `git diff upstream/main -- <文件>` 看一眼上游有没有改构造函数/方法签名；正确做法是"**保留实现，接受签名**"。
+
+**核对方法**（下次同步可照做）：
+
+```powershell
+# 只导上游改动，带函数上下文，便于逐个文件定策略
+git diff -W HEAD...upstream/main > D:\sync\upstream-full.diff
+# 算重叠：双方都改过的文件就是冲突候选
+git diff --name-only c805f0b5b..HEAD  ∩  git diff --name-only c805f0b5b..upstream/main
+```
+
 ---
 
 ## 六、排错
@@ -343,7 +380,7 @@ git switch ui-polish && git merge main
 | # | 问题 | 现状与原因 |
 |---|---|---|
 | 1 | **UP 主主页的视频卡片没有 Hero 过渡** | 该族使用的是专用卡片（`member_video/widgets/video_card_h_member_video.dart`、`member_home/widgets/video_card_v_member_home.dart`、`member_search/child/widgets/search_archive_grpc.dart`、`member_season_series/...`），封面是裸 `NetworkImgLayer`，未接 `videoCoverHero`。排查结论：这些卡片的数据模型（`SpaceArchiveItem` 等）与交互（PGC/课程走 `viewPgcFromUri`、直传 `cid`、竖屏判断、「上次观看」遮罩）确实不同，独立成类是合理的；但也因此**复制了一份渲染代码**，属于上游的架构常态。<br>修法：每处 2 行（import + `videoCoverHero(bvid, cover)`），**本次决定不做**。<br>注：`member_pgc` 走番剧页，本来就不应加。 |
-| 2 | **封面滚出视口后返回，封面会从屏幕外飞入** | 详见下节「附：关于共享元素不可见」。 |
+| 2 | ~~封面滚出视口后返回，封面会从屏幕外飞入~~ | ✅ **已于 2026-11-07 修复**：`videoPlayer` 外层加 `HeroMode(enabled: scrollRatio < 1)`。判断依据与规范推理见下节附录。 |
 
 #### 附：关于共享元素不可见
 
@@ -353,7 +390,9 @@ MD3 的 **container transform**（Flutter `Hero` 就是它的实现）有一个�
 
 **成因**：视频页的 Hero 位于可滚动头部内。向上滚动越过封面后，该 RenderBox 仍在树中（在 cacheExtent 内），`localToGlobal` 得到**负坐标**，于是飞行器从视口上方起飞 → "从屏幕外飞进来"。
 
-**可行修法**：用 `HeroMode(enabled: isCoverVisible)` 包住头部播放器。封面在视口内才注册 Hero；滚出后不注册 → 返回时找不到匹配目的地 → **退化为普通路由过渡**。正向进入不受影响（源端卡片必然可见）。
+**已采用的修法**：`HeroMode(enabled: videoDetailController.scrollRatio.value < 1)` 包住头部播放器（`lib/pages/video/view.dart`）。`scrollRatio == 1` 正是 `VideoHeader` 把视频从 `minVideoHeight` 压到 `kToolbarHeight` 的终点，即封面彻底不可见的精确时刻 —— **复用现成状态，零新增监听**。封面滚出后不注册 Hero → 返回时找不到匹配目的地 → **退化为普通路由过渡**；正向进入不受影响。
+
+> 实现细节：`videoPlayer(...)` 的 widget 必须提到 `Obx` 之外构造，否则折叠过程中 `scrollRatio` 每帧变化会导致播放器子树每帧重建。
 
 可见性判据三种取法：
 
@@ -394,7 +433,7 @@ lib/common/widgets/video_card/
   ├─ video_card_v.dart                      首页单列卡片（大改）
   └─ video_card_h.dart                      通用横向卡片（含 Hero）
 
-lib/pages/main/view.dart                    fade-through + 底栏分隔线
+lib/pages/main/view.dart                    与上游一致（fade-through 与分隔线已撤）
 lib/utils/theme_utils.dart                  cardTheme / navigationBarTheme
 lib/scripts/patch.ps1                       getx 过渡时长补丁
 ```

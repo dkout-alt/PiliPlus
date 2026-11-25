@@ -189,7 +189,7 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.smallCardWidth, defaultValue: 240.0);
 
   static double get recommendCardWidth =>
-      _setting.get(SettingBoxKey.recommendCardWidth, defaultValue: 500.0);
+      _setting.get(SettingBoxKey.recommendCardWidth, defaultValue: 240.0);
 
   static UpPanelPosition get upPanelPosition =>
       UpPanelPosition.values[_setting.get(
