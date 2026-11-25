@@ -3,10 +3,12 @@ import 'package:PiliPlus/common/sliver_single_child_delegate.dart';
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
+import 'package:PiliPlus/common/widgets/scaffold/simple_scaffold.dart';
 import 'package:PiliPlus/common/widgets/video_card/video_card_v.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/pages/rcmd/controller.dart';
 import 'package:PiliPlus/utils/grid.dart';
+import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
@@ -31,7 +33,10 @@ class _RcmdPageState extends State<RcmdPage>
     final colorScheme = ColorScheme.of(context);
     // 单列：封面贴屏幕边缘（方角）；多列：网格加水平内边距，封面圆角才成立
     final hPad = _isGridMode ? _gridPadding : 0.0;
-    return refreshIndicator(
+    // 上游 2.2.1 恢复了 Container 包装，本 fork 刻意去掉以让封面全宽贴边；
+    // 但保留了上游新增的 refreshKey 与桌面刷新 FAB
+    final child = refreshIndicator(
+      key: controller.refreshKey,
       onRefresh: controller.onRefresh,
       child: CustomScrollView(
         controller: controller.scrollController,
@@ -51,6 +56,25 @@ class _RcmdPageState extends State<RcmdPage>
         ],
       ),
     );
+    if (PlatformUtils.isDesktop && Pref.showRefreshFAB) {
+      return ScaffoldLayout(
+        body: child,
+        fab: Padding(
+          padding: const .only(
+            right: kFloatingActionButtonMargin,
+            bottom: 80 + kFloatingActionButtonMargin,
+          ),
+          child: FloatingActionButton(
+            tooltip: '刷新',
+            onPressed: controller.toTopAndRefresh,
+            backgroundColor: colorScheme.secondaryContainer,
+            foregroundColor: colorScheme.onSecondaryContainer,
+            child: const Icon(Icons.refresh),
+          ),
+        ),
+      );
+    }
+    return child;
   }
 
   /// 多列模式判据：列宽上限被调低时才会出现多列
